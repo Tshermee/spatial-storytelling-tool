@@ -679,9 +679,11 @@ function applyPayload(d) {
 }
 
 let _sbSaveTimer = null;
+let _sbReady = false;
 function saveStateSupabase() {
   clearTimeout(_sbSaveTimer);
   _sbSaveTimer = setTimeout(async () => {
+    if (!_sbReady) return;
     try {
       const payload = statePayload();
       let chartId = getChartId();
@@ -1680,12 +1682,13 @@ fullRender();
 
 // Async: try loading from Supabase (overrides localStorage if remote data exists)
 loadStateSupabase().then(loaded => {
+  _sbReady = true;
   if (loaded) {
     document.getElementById('set-dots').checked    = state.showDots;
     document.getElementById('set-vals').checked    = state.showVals;
     document.getElementById('set-plabels').checked = state.showPLabels;
-    fullRender();
   }
+  fullRender();
 });
 
 window.addEventListener('resize', renderChart);
