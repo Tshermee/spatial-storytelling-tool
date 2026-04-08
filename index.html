@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SIGGRAPH Spatial Storytelling Assessment Tool</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: #f0f4f8;
+  color: #1a202c;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══ HEADER ══════════════════════════════════════════════════════════════════ */
+header {
+  flex-shrink: 0;
+  height: 64px;
+  background: #fff;
+  border-bottom: 3px solid #9d2235;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+
+.hd-logo-main img {
+  height: 32px;
+  display: block;
+}
+
+.hd-divider {
+  width: 1px; height: 32px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.hd-title {
+  display: flex; flex-direction: column; gap: 1px;
+}
+
+header h1 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a202c;
+  letter-spacing: 0px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.hd-subtitle {
+  font-size: 10px;
+  font-weight: 400;
+  color: #88898d;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hd-logo-conf {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.hd-logo-conf img {
+  height: 36px;
+  display: block;
+}
+
+/* ══ LAYOUT ══════════════════════════════════════════════════════════════════ */
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ══ SHARED SIDEBAR STYLES ═══════════════════════════════════════════════════ */
+.sidebar {
+  flex-shrink: 0;
+  background: #fff;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+.sidebar-left  { width: 270px; border-right: 1px solid #e2e8f0; }
+.sidebar-right { width: 290px; border-left:  1px solid #e2e8f0; }
+
+.sb-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+
+.sec-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a0aec0;
+  margin-bottom: 8px;
+}
+
+/* ══ ADD BUTTON ══════════════════════════════════════════════════════════════ */
+.add-btn {
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1.5px dashed #cbd5e0;
+  border-radius: 7px;
+  color: #a0aec0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.14s;
+}
+.add-btn:hover { background: #fdf2f4; border-color: #c87585; color: #9d2235; }
+
+/* ══ ICON BUTTON ═════════════════════════════════════════════════════════════ */
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: #cbd5e0; padding: 3px; border-radius: 4px;
+  display: flex; align-items: center;
+  transition: all 0.14s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { color: #718096; background: #edf2f7; }
+.icon-btn.danger:hover { color: #e53e3e; background: #fff5f5; }
+
+/* ══ AXIS ACCORDION ══════════════════════════════════════════════════════════ */
+.axes-list { display: flex; flex-direction: column; gap: 5px; }
+
+.axis-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.axis-card-header {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 8px;
+  background: #f7fafc;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.axis-card-header:hover { background: #edf2f7; }
+
+.ax-chevron {
+  color: #cbd5e0;
+  flex-shrink: 0;
+  transition: transform 0.18s;
+}
+.axis-card.open .ax-chevron { transform: rotate(90deg); }
+
+.ax-num {
+  font-size: 10px; font-weight: 700;
+  color: #a0aec0; width: 14px; text-align: center; flex-shrink: 0;
+}
+
+.ax-name-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13px; font-weight: 600; color: #2d3748; min-width: 0;
+}
+.ax-name-input::placeholder { color: #e2e8f0; }
+
+/* Point labels body */
+.axis-pl-body {
+  display: none;
+  padding: 8px 10px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  flex-direction: column;
+  gap: 5px;
+}
+.axis-card.open .axis-pl-body { display: flex; }
+
+.pl-row { display: flex; align-items: center; gap: 7px; }
+
+.pl-badge {
+  width: 21px; height: 21px; border-radius: 50%;
+  background: #edf2f7; border: 1px solid #e2e8f0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #718096;
+  flex-shrink: 0;
+}
+
+.pl-input {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  padding: 3px 7px;
+  font-size: 11.5px;
+  color: #2d3748;
+  outline: none;
+  background: #f7fafc;
+  transition: border-color 0.14s, background 0.14s;
+}
+.pl-input:focus { border-color: #5e8ab4; background: #fff; }
+.pl-input::placeholder { color: #e2e8f0; }
+
+/* ══ DISPLAY SETTINGS ════════════════════════════════════════════════════════ */
+.disp-list { display: flex; flex-direction: column; gap: 7px; }
+.disp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: #718096;
+}
+.disp-row input[type="checkbox"] { accent-color: #9d2235; cursor: pointer; width: 14px; height: 14px; }
+
+/* ══ EXPORT BUTTON ═══════════════════════════════════════════════════════════ */
+.export-btn {
+  margin: 0 14px 14px;
+  padding: 8px;
+  background: #9d2235;
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.export-btn:hover { background: #7d1a29; }
+
+/* ══ CHART AREA ══════════════════════════════════════════════════════════════ */
+.chart-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #f7fafc;
+  position: relative;
+}
+
+#chart-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* ══ SUBMISSIONS SIDEBAR ═════════════════════════════════════════════════════ */
+.submissions-stack { display: flex; flex-direction: column; gap: 8px; }
+
+.submission-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+.submission-card:hover { border-color: #c87585; }
+.submission-card.active { border-color: #9d2235; box-shadow: 0 0 0 3px #fde8ec; }
+
+.pc-header {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 10px;
+  background: #f7fafc;
+  user-select: none;
+}
+.submission-card.active .pc-header { background: #fde8ec; }
+
+.pc-color-swatch {
+  width: 11px; height: 11px; border-radius: 50%;
+  flex-shrink: 0; cursor: pointer;
+  border: 1.5px solid rgba(0,0,0,0.08);
+}
+
+.pc-name-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13px; font-weight: 600; color: #2d3748; min-width: 0;
+}
+.pc-name-input::placeholder { color: #e2e8f0; }
+
+.pc-score-badge {
+  font-size: 11px; font-weight: 700;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 99px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Expanded submission values */
+.pc-values {
+  display: none;
+  padding: 10px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  flex-direction: column;
+  gap: 10px;
+}
+.submission-card.active .pc-values { display: flex; }
+
+/* Threshold card special styling */
+.submission-card.threshold-card {
+  border-color: #cbd5e0;
+  border-style: dashed;
+}
+.submission-card.threshold-card .pc-header {
+  background: #f7fafc;
+}
+.submission-card.threshold-card.active .pc-header {
+  background: #f0fff4;
+}
+.submission-card.threshold-card { border-color: #a0aec0; }
+.submission-card.threshold-card.active { border-color: #68d391; box-shadow: 0 0 0 3px #f0fff4; }
+.submission-card.average-card { border-color: #81e6d9; border-style: dashed; }
+.submission-card.average-card:hover { border-color: #0bc5ea; }
+.submission-card.average-card.active { border-color: #0bc5ea; box-shadow: 0 0 0 3px #e6fffa; }
+.pc-locked-name {
+  flex: 1; font-size: 13px; font-weight: 700; color: #4a5568;
+  display: flex; align-items: center; gap: 5px;
+}
+.pc-lock-badge {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; background: #edf2f7; color: #718096;
+  border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 5px;
+}
+
+/* Score bar */
+.score-bar-block {
+  padding: 6px 0 4px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.score-bar-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.score-big { font-size: 22px; font-weight: 800; }
+.score-of  { font-size: 11px; color: #a0aec0; }
+.score-track {
+  height: 5px; background: #edf2f7; border-radius: 99px; overflow: hidden;
+}
+.score-fill {
+  height: 100%; border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+/* Axis slider rows */
+.av-row { display: flex; flex-direction: column; gap: 2px; }
+.av-top  { display: flex; justify-content: space-between; align-items: center; }
+.av-name {
+  font-size: 11px; font-weight: 600; color: #4a5568;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 170px;
+}
+.av-num { font-size: 13px; font-weight: 700; color: #1a202c; min-width: 16px; text-align: right; }
+
+input[type="range"].av-slider {
+  width: 100%;
+  accent-color: var(--c, #9d2235);
+  cursor: pointer;
+  height: 18px;
+}
+
+/* Per-axis label visibility toggle */
+.ax-label-toggle {
+  background: none; border: none; cursor: pointer; padding: 2px;
+  border-radius: 4px; display: flex; align-items: center;
+  transition: all 0.14s; flex-shrink: 0;
+  color: #5e8ab4;
+}
+.ax-label-toggle:hover { background: #eef4f9; }
+.ax-label-toggle.hidden { color: #cbd5e0; }
+
+.av-hint {
+  font-size: 10px; color: #a0aec0; font-style: italic;
+  min-height: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ══ SCORE SUMMARY ═══════════════════════════════════════════════════════════ */
+.summary-list { display: flex; flex-direction: column; gap: 6px; }
+.summary-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #718096;
+}
+.summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.summary-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summary-score { font-weight: 700; min-width: 42px; text-align: right; }
+
+/* Hidden color input */
+#color-picker { position: fixed; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
+/* ══ IMPORT MODAL ════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,32,44,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  width: 580px;
+  max-width: 96vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex; align-items: center; gap: 10px;
+}
+.modal-header h2 { flex: 1; font-size: 15px; font-weight: 700; color: #1a202c; }
+.modal-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: #a0aec0; padding: 4px; border-radius: 5px;
+  display: flex; align-items: center; transition: all 0.12s;
+}
+.modal-close-btn:hover { color: #4a5568; background: #edf2f7; }
+
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+
+.modal-preview {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+}
+.modal-preview table { border-collapse: collapse; font-size: 11px; width: 100%; }
+.modal-preview th {
+  background: #f7fafc; padding: 5px 10px;
+  font-weight: 700; color: #4a5568;
+  border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap;
+}
+.modal-preview td { padding: 4px 10px; color: #718096; border-bottom: 1px solid #f0f4f8; white-space: nowrap; }
+.modal-preview tr:last-child td { border-bottom: none; }
+
+.map-grid { display: flex; flex-direction: column; gap: 8px; }
+.map-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.map-label {
+  width: 160px; flex-shrink: 0;
+  font-size: 12px; font-weight: 600; color: #4a5568;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.map-select {
+  flex: 1;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 5px 8px; font-size: 12px; color: #2d3748;
+  background: #f7fafc; outline: none; cursor: pointer;
+  transition: border-color 0.12s;
+}
+.map-select:focus { border-color: #5e8ab4; background: #fff; }
+.map-select.matched { border-color: #9d2235; background: #fdf2f4; }
+
+.map-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex; align-items: center; gap: 10px;
+}
+.modal-note { flex: 1; font-size: 11px; color: #a0aec0; }
+.modal-cancel-btn {
+  padding: 7px 16px; background: #f7fafc; border: 1px solid #e2e8f0;
+  border-radius: 7px; font-size: 12px; font-weight: 600; color: #4a5568;
+  cursor: pointer; transition: all 0.12s;
+}
+.modal-cancel-btn:hover { background: #edf2f7; }
+.modal-import-btn {
+  padding: 7px 18px; background: #9d2235; border: none;
+  border-radius: 7px; font-size: 12px; font-weight: 700; color: #fff;
+  cursor: pointer; transition: background 0.12s;
+}
+.modal-import-btn:hover { background: #7d1a29; }
+.modal-import-btn:disabled { background: #e2e8f0; color: #a0aec0; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-logo-main">
+    <img src="https://www.siggraph.org/wp-content/uploads/2021/11/siggraph-logo-left.svg"
+         alt="ACM SIGGRAPH" onerror="this.style.display='none';document.getElementById('hd-fallback').style.display='flex'" />
+    <span id="hd-fallback" style="display:none;font-size:17px;font-weight:700;letter-spacing:-0.5px;color:#9d2235;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">ACM SIGGRAPH</span>
+  </div>
+  <div class="hd-divider"></div>
+  <div class="hd-title">
+    <h1>Spatial Storytelling Assessment Tool</h1>
+    <span class="hd-subtitle">Submission Evaluation</span>
+  </div>
+  <div class="hd-logo-conf">
+    <img src="https://s2026.siggraph.org/wp-content/themes/siggraph2026/assets/images/2026-siggraph-logo-brand.png"
+         alt="SIGGRAPH 2026"
+         onerror="this.outerHTML='<span style=\'font-size:11px;font-weight:700;color:#9d2235;font-family:Helvetica,Arial,sans-serif\'>SIGGRAPH<br>2026</span>'" />
+  </div>
+</header>
+
+<div class="app-body">
+
+  <!-- ── LEFT: Axes ─────────────────────────────────────────────── -->
+  <aside class="sidebar sidebar-left">
+    <div class="sb-body">
+
+      <div>
+        <div class="sec-label">Axes &amp; Point Labels</div>
+        <div class="axes-list" id="axes-list"></div>
+        <button class="add-btn" id="add-axis-btn" style="margin-top:6px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Axis
+        </button>
+      </div>
+
+      <div>
+        <div class="sec-label">Display</div>
+        <div class="disp-list">
+          <div class="disp-row"><span>Data point dots</span><input type="checkbox" id="set-dots" checked /></div>
+          <div class="disp-row"><span>Value numbers on chart</span><input type="checkbox" id="set-vals" /></div>
+          <div class="disp-row"><span>Point labels on chart</span><input type="checkbox" id="set-plabels" checked /></div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="export-btn" id="export-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export SVG
+    </button>
+  </aside>
+
+  <!-- ── CENTER: Chart ──────────────────────────────────────────── -->
+  <div class="chart-area">
+    <svg id="chart-svg" viewBox="-360 -340 720 680" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <!-- ── RIGHT: Submissions ───────────────────────────────────── -->
+  <aside class="sidebar sidebar-right">
+    <div class="sb-body">
+
+      <div>
+        <div class="sec-label">Submissions</div>
+        <div class="submissions-stack" id="submissions-list"></div>
+        <button class="add-btn" id="add-submission-btn" style="margin-top:6px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Submission
+        </button>
+        <button class="add-btn" id="import-csv-btn" style="margin-top:4px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Import CSV
+        </button>
+      </div>
+
+      <div>
+        <div class="sec-label">Score Summary</div>
+        <div class="summary-list" id="summary-list"></div>
+      </div>
+
+    </div>
+  </aside>
+
+</div>
+
+<input type="color" id="color-picker" />
+<input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" />
+
+<!-- ── CSV Import Modal ─────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="import-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9d2235" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <h2>Import CSV</h2>
+      <button class="modal-close-btn" id="modal-close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Preview -->
+      <div>
+        <div class="sec-label" style="margin-bottom:6px">Preview <span id="modal-row-count" style="color:#a0aec0;font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+        <div class="modal-preview" id="modal-preview"></div>
+      </div>
+
+      <!-- Column mapping -->
+      <div>
+        <div class="sec-label" style="margin-bottom:8px">Map columns to fields</div>
+        <div class="map-grid">
+          <div class="map-row">
+            <span class="map-label">Submission name</span>
+            <select class="map-select" id="map-name"></select>
+          </div>
+          <div class="map-divider"></div>
+          <div id="map-axes-rows"></div>
+        </div>
+      </div>
+
+      <!-- Scale -->
+      <div>
+        <div class="sec-label" style="margin-bottom:8px">Value scale in CSV</div>
+        <div class="map-row">
+          <span class="map-label">Source range</span>
+          <select class="map-select" id="map-scale" style="max-width:180px">
+            <option value="5">0 – 5  (keep as-is)</option>
+            <option value="10">0 – 10  (scale to 0–5)</option>
+            <option value="100">0 – 100  (scale to 0–5)</option>
+            <option value="auto">Auto-detect per column</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <span class="modal-note" id="modal-note"></span>
+      <button class="modal-cancel-btn" id="modal-cancel">Cancel</button>
+      <button class="modal-import-btn" id="modal-import">Import</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Constants & palette ──────────────────────────────────────────────────────
+const PALETTE = ['#3182ce','#e53e3e','#38a169','#d69e2e','#805ad5','#dd6b20','#319795','#d53f8c'];
+const MAX_VAL      = 5;
+const RINGS        = 5;
+const THRESHOLD_ID = 'threshold';
+const AVERAGE_ID   = 'average';
+const AVERAGE_COLOR = '#0bc5ea';
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+// ─── Persistence ─────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'siggraph-assessment-v2';
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      axes:        state.axes,
+      submissions: state.submissions,
+      activeId:    state.activeId,
+      showDots:    state.showDots,
+      showVals:    state.showVals,
+      showPLabels: state.showPLabels,
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!Array.isArray(d.axes) || !Array.isArray(d.submissions)) return false;
+    state.axes        = d.axes;
+    state.submissions = d.submissions;
+    state.activeId    = d.activeId;
+    state.showDots    = d.showDots  ?? true;
+    state.showVals    = d.showVals  ?? false;
+    state.showPLabels = d.showPLabels ?? true;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+  axes: [],
+  submissions: [],
+  activeId: null,
+  showDots:    true,
+  showVals:    false,
+  showPLabels: true,
+};
+
+function makeThreshold() {
+  const values = {};
+  state.axes.forEach(a => { values[a.id] = 0; });
+  return { id: THRESHOLD_ID, name: 'Threshold', color: '#718096', values, isThreshold: true };
+}
+
+function makeSubmission(name, color) {
+  const id = uid();
+  const values = {};
+  state.axes.forEach(a => { values[a.id] = 0; });
+  return { id, name, color, values, isThreshold: false };
+}
+
+function seedDefaults() {
+  state.axes = [
+    { id: uid(), label: 'Conceptual strength',          pl: {}, showLabels: true },
+    { id: uid(), label: 'Execution quality / maturity', pl: {}, showLabels: true },
+    { id: uid(), label: 'Novelty',                      pl: {}, showLabels: true },
+    { id: uid(), label: 'Recency',                      pl: {}, showLabels: true },
+    { id: uid(), label: 'Knowledge transfer',           pl: {}, showLabels: true },
+    { id: uid(), label: 'Technical innovation',         pl: {}, showLabels: true },
+    { id: uid(), label: 'Cultural impact',              pl: {}, showLabels: true },
+    { id: uid(), label: 'Spectacle',                    pl: {}, showLabels: true },
+  ];
+  state.submissions = [];
+  state.submissions.push(makeThreshold());
+  const s0 = makeSubmission('Submission 1', PALETTE[0]);
+  state.submissions.push(s0);
+  state.activeId = s0.id;
+}
+
+// Boot: restore or seed
+if (!loadState()) seedDefaults();
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function submissionTotal(sub) {
+  return state.axes.reduce((s, a) => s + (sub.values[a.id] || 0), 0);
+}
+function maxTotal() { return state.axes.length * MAX_VAL; }
+
+// Returns { axisId: avgValue } across all real submissions (no threshold/average)
+function computeAverageValues() {
+  const real = state.submissions.filter(s => !s.isThreshold && s.id !== AVERAGE_ID);
+  if (real.length === 0) return Object.fromEntries(state.axes.map(a => [a.id, 0]));
+  return Object.fromEntries(state.axes.map(a => {
+    const avg = real.reduce((sum, s) => sum + (s.values[a.id] || 0), 0) / real.length;
+    return [a.id, avg];
+  }));
+}
+
+function svgEl(tag, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+// ─── Chart ────────────────────────────────────────────────────────────────────
+function renderChart() {
+  const svg = document.getElementById('chart-svg');
+  svg.innerHTML = '';
+  const n = state.axes.length;
+  if (n < 3) {
+    const t = svgEl('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: '#a0aec0', 'font-size': '14', 'font-family': 'system-ui' });
+    t.textContent = 'Add at least 3 axes';
+    svg.appendChild(t); return;
+  }
+
+  const R = 210;
+  const ang = i => -Math.PI / 2 + (2 * Math.PI / n) * i;
+  const pt  = (a, r) => [r * Math.cos(a), r * Math.sin(a)];
+
+  // ── Grid rings ──
+  for (let ring = 1; ring <= RINGS; ring++) {
+    const rr = R * ring / RINGS;
+    const pts = state.axes.map((_, i) => pt(ang(i), rr).join(',')).join(' ');
+    svg.appendChild(svgEl('polygon', {
+      points: pts,
+      fill:   ring % 2 === 0 ? 'rgba(203,213,224,0.2)' : 'none',
+      stroke: '#e2e8f0', 'stroke-width': '1'
+    }));
+
+    // Ring number – shown offset from first axis
+    const a0 = ang(0);
+    const [rx, ry] = pt(a0, rr);
+    // Perpendicular offset to the right of axis 0 (which points up)
+    const pa = a0 + Math.PI / 2;
+    const lbl = svgEl('text', {
+      x: rx + 7 * Math.cos(pa),
+      y: ry + 7 * Math.sin(pa),
+      'text-anchor': 'start',
+      'dominant-baseline': 'middle',
+      fill: '#a0aec0', 'font-size': '9',
+      'font-family': 'system-ui,sans-serif',
+    });
+    lbl.textContent = ring;
+    svg.appendChild(lbl);
+  }
+
+  // ── Axis spokes ──
+  state.axes.forEach((_, i) => {
+    const [x, y] = pt(ang(i), R);
+    svg.appendChild(svgEl('line', { x1: 0, y1: 0, x2: x, y2: y, stroke: '#cbd5e0', 'stroke-width': '1' }));
+  });
+
+  // ── Point labels along each axis ──
+  if (state.showPLabels) {
+    state.axes.forEach((axis, i) => {
+      if (axis.showLabels === false) return;
+      const a = ang(i);
+      const perp = a + Math.PI / 2;
+      const anchor = Math.cos(perp) > 0.07 ? 'start' : Math.cos(perp) < -0.07 ? 'end' : 'middle';
+      const ox = 10 * Math.cos(perp);
+      const oy = 10 * Math.sin(perp);
+
+      for (let v = 1; v <= MAX_VAL; v++) {
+        const text = (axis.pl[v] || '').trim();
+        if (!text) continue;
+        const [px, py] = pt(a, R * v / RINGS);
+
+        // Tick dot
+        svg.appendChild(svgEl('circle', { cx: px, cy: py, r: 2.5, fill: '#a0aec0' }));
+
+        const disp = text.length > 30 ? text.slice(0, 29) + '…' : text;
+        const t = svgEl('text', {
+          x: px + ox, y: py + oy,
+          'text-anchor': anchor,
+          'dominant-baseline': 'middle',
+          fill: '#718096',
+          'font-size': '9',
+          'font-family': 'system-ui,sans-serif',
+        });
+        t.textContent = disp;
+        svg.appendChild(t);
+      }
+    });
+  }
+
+  // ── Data polygons: threshold → average → inactive → active on top ──
+  const threshold  = state.submissions.find(s => s.isThreshold);
+  const regulars   = state.submissions.filter(s => !s.isThreshold && s.id !== AVERAGE_ID);
+  const sorted     = [...regulars].sort((a, b) => (a.id === state.activeId ? 1 : -1));
+
+  // Build a synthetic average entry for drawing
+  const avgVals    = computeAverageValues();
+  const avgEntry   = { id: AVERAGE_ID, name: 'Average', color: AVERAGE_COLOR, values: avgVals, isAverage: true };
+
+  const drawOrder  = [threshold, avgEntry, ...sorted].filter(Boolean);
+
+  drawOrder.forEach(sub => {
+    const isActive    = sub.id === state.activeId;
+    const isThreshold = sub.isThreshold;
+    const isAverage   = sub.id === AVERAGE_ID;
+    const pts = state.axes.map((a, i) => {
+      const v = sub.values[a.id] || 0;
+      return pt(ang(i), R * v / RINGS).join(',');
+    }).join(' ');
+
+    if (isAverage) {
+      svg.appendChild(svgEl('polygon', {
+        points: pts,
+        fill: AVERAGE_COLOR,
+        'fill-opacity': '0.08',
+        stroke: AVERAGE_COLOR,
+        'stroke-width': isActive ? '2.5' : '2',
+        'stroke-dasharray': '4,3',
+        'stroke-linejoin': 'round',
+      }));
+      state.axes.forEach((a, i) => {
+        const v = sub.values[a.id] || 0;
+        const [px, py] = pt(ang(i), R * v / RINGS);
+        if (state.showDots) {
+          svg.appendChild(svgEl('circle', { cx: px, cy: py, r: 4, fill: AVERAGE_COLOR, stroke: '#fff', 'stroke-width': '1.5' }));
+        }
+        if (state.showVals) {
+          const t = svgEl('text', { x: px, y: py - 8, 'text-anchor': 'middle', fill: AVERAGE_COLOR, 'font-size': '10', 'font-weight': '700', 'font-family': 'system-ui,sans-serif' });
+          t.textContent = parseFloat(v).toFixed(1);
+          svg.appendChild(t);
+        }
+      });
+      return;
+    }
+
+    if (isThreshold) {
+      svg.appendChild(svgEl('polygon', {
+        points: pts,
+        fill: 'none',
+        stroke: '#a0aec0',
+        'stroke-width': isActive ? '2' : '1.5',
+        'stroke-dasharray': '6,3',
+        'stroke-linejoin': 'round',
+      }));
+      // Threshold dots
+      state.axes.forEach((a, i) => {
+        const v = sub.values[a.id] || 0;
+        const [px, py] = pt(ang(i), R * v / RINGS);
+        if (state.showDots) {
+          svg.appendChild(svgEl('circle', { cx: px, cy: py, r: 3.5, fill: '#a0aec0', stroke: '#fff', 'stroke-width': '1.5' }));
+        }
+        if (state.showVals && v > 0) {
+          const t = svgEl('text', { x: px, y: py - 8, 'text-anchor': 'middle', fill: '#a0aec0', 'font-size': '10', 'font-weight': '700', 'font-family': 'system-ui,sans-serif' });
+          t.textContent = v;
+          svg.appendChild(t);
+        }
+      });
+    } else {
+      svg.appendChild(svgEl('polygon', {
+        points: pts,
+        fill: sub.color,
+        'fill-opacity': isActive ? '0.13' : '0.07',
+        stroke: sub.color,
+        'stroke-width': isActive ? '2.5' : '1.5',
+        'stroke-opacity': isActive ? '1' : '0.45',
+        'stroke-linejoin': 'round',
+      }));
+      state.axes.forEach((a, i) => {
+        const v = sub.values[a.id] || 0;
+        const [px, py] = pt(ang(i), R * v / RINGS);
+        if (state.showDots) {
+          svg.appendChild(svgEl('circle', { cx: px, cy: py, r: isActive ? 5 : 3.5, fill: sub.color, stroke: '#fff', 'stroke-width': '1.5', 'fill-opacity': isActive ? '1' : '0.6' }));
+        }
+        if (state.showVals && v > 0) {
+          const t = svgEl('text', { x: px, y: py - 8, 'text-anchor': 'middle', fill: sub.color, 'font-size': '10', 'font-weight': '700', 'font-family': 'system-ui,sans-serif', 'fill-opacity': isActive ? '1' : '0.6' });
+          t.textContent = v;
+          svg.appendChild(t);
+        }
+      });
+    }
+  });
+
+  // ── Axis tip labels ──
+  state.axes.forEach((axis, i) => {
+    const a    = ang(i);
+    const cosA = Math.cos(a), sinA = Math.sin(a);
+    const [lx, ly] = pt(a, R + 28);
+
+    const anchor   = cosA >  0.07 ? 'start' : cosA < -0.07 ? 'end' : 'middle';
+    const lineH    = 13;
+    const label    = (axis.label || `Axis ${i + 1}`);
+    const words    = label.split(' ');
+
+    // Word-wrap at ~85px wide
+    const lines = []; let cur = '';
+    words.forEach(w => {
+      const test = cur ? cur + ' ' + w : w;
+      if (test.length * 6.8 > 85 && cur) { lines.push(cur); cur = w; }
+      else cur = test;
+    });
+    if (cur) lines.push(cur);
+
+    // Vertical anchor: lines grow down when axis points down, grow up when axis points up
+    const yBase = sinA > 0.07
+      ? ly                                         // pointing down → grow down
+      : sinA < -0.07
+        ? ly - (lines.length - 1) * lineH          // pointing up   → grow up
+        : ly - (lines.length - 1) * lineH / 2;     // horizontal    → centred
+
+    lines.forEach((line, li) => {
+      const t = svgEl('text', {
+        x: lx, y: yBase + li * lineH,
+        'text-anchor': anchor,
+        fill: '#2d3748',
+        'font-size': '12.5', 'font-weight': '700',
+        'font-family': 'system-ui,sans-serif',
+      });
+      t.textContent = line;
+      svg.appendChild(t);
+    });
+  });
+
+  // ── Centre dot ──
+  svg.appendChild(svgEl('circle', { cx: 0, cy: 0, r: 3, fill: '#cbd5e0' }));
+}
+
+// ─── Axes list ────────────────────────────────────────────────────────────────
+function renderAxesList() {
+  const cont = document.getElementById('axes-list');
+  cont.innerHTML = '';
+  state.axes.forEach((axis, i) => {
+    const card = document.createElement('div');
+    card.className = 'axis-card';
+    card.dataset.aid = axis.id;
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'axis-card-header';
+    const labelsOn = axis.showLabels !== false;
+    hdr.innerHTML = `
+      <svg class="ax-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="ax-num">${i + 1}</span>
+      <input class="ax-name-input" value="${axis.label}" placeholder="Axis name" maxlength="35" data-aid="${axis.id}" />
+      <button class="ax-label-toggle ${labelsOn ? '' : 'hidden'}" data-toggle-labels="${axis.id}" title="${labelsOn ? 'Hide point labels' : 'Show point labels'}">
+        ${labelsOn
+          ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+          : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+        }
+      </button>
+      <button class="icon-btn danger" data-del-axis="${axis.id}" title="Remove">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    `;
+
+    // Point labels 0-5
+    const body = document.createElement('div');
+    body.className = 'axis-pl-body';
+    for (let v = 0; v <= MAX_VAL; v++) {
+      const row = document.createElement('div');
+      row.className = 'pl-row';
+      row.innerHTML = `
+        <span class="pl-badge">${v}</span>
+        <input class="pl-input" value="${axis.pl[v] || ''}" placeholder="Label for ${v}…" maxlength="100" data-aid="${axis.id}" data-pv="${v}" />
+      `;
+      body.appendChild(row);
+    }
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    cont.appendChild(card);
+  });
+}
+
+// ─── Submissions list ─────────────────────────────────────────────────────────
+function renderSubmissionsList() {
+  const cont = document.getElementById('submissions-list');
+  cont.innerHTML = '';
+  const max    = maxTotal();
+  const avgVals = computeAverageValues();
+  const avgTotal = parseFloat(state.axes.reduce((s, a) => s + (avgVals[a.id] || 0), 0).toFixed(1));
+  const avgPct   = max > 0 ? (avgTotal / max * 100) : 0;
+
+  // Build list: threshold, then average (read-only), then real submissions
+  const threshold = state.submissions.find(s => s.isThreshold);
+  const regulars  = state.submissions.filter(s => !s.isThreshold);
+
+  // --- Average card (read-only, computed) ---
+  const avgCard = document.createElement('div');
+  const avgIsActive = state.activeId === AVERAGE_ID;
+  avgCard.className = 'submission-card average-card' + (avgIsActive ? ' active' : '');
+  avgCard.dataset.pid = AVERAGE_ID;
+  avgCard.innerHTML = `
+    <div class="pc-header" style="${avgIsActive ? 'background:#e6fffa' : ''}">
+      <span class="pc-color-swatch" style="background:${AVERAGE_COLOR};border-color:${AVERAGE_COLOR}"></span>
+      <span class="pc-locked-name" style="color:#0987a0">
+        Average
+        <span class="pc-lock-badge" style="background:#e6fffa;border-color:#81e6d9;color:#0987a0">computed</span>
+      </span>
+      <span class="pc-score-badge" id="badge-${AVERAGE_ID}" style="color:${AVERAGE_COLOR}">${avgTotal}&thinsp;/&thinsp;${max}</span>
+    </div>
+    <div class="pc-values" id="avg-values-body" style="${avgIsActive ? 'display:flex' : ''}">
+      <div class="score-bar-block">
+        <div class="score-bar-top">
+          <span style="font-size:11px;color:#718096">Average Total</span>
+          <span>
+            <span class="score-big" id="total-${AVERAGE_ID}" style="color:${AVERAGE_COLOR}">${avgTotal}</span>
+            <span class="score-of">/ ${max} pts</span>
+          </span>
+        </div>
+        <div class="score-track">
+          <div class="score-fill" id="fill-${AVERAGE_ID}" style="width:${avgPct}%;background:${AVERAGE_COLOR}"></div>
+        </div>
+      </div>
+      ${state.axes.map(axis => {
+        const v = parseFloat((avgVals[axis.id] || 0).toFixed(1));
+        return `
+          <div class="av-row">
+            <div class="av-top">
+              <span class="av-name" title="${axis.label}">${axis.label || 'Axis'}</span>
+              <span class="av-num" style="color:${AVERAGE_COLOR}">${v}</span>
+            </div>
+            <div style="height:4px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin:2px 0 4px">
+              <div data-avg-bar="${axis.id}" style="height:100%;width:${v / MAX_VAL * 100}%;background:${AVERAGE_COLOR};border-radius:99px;transition:width 0.3s"></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // --- Threshold card ---
+  const buildCard = sub => {
+    const isActive    = sub.id === state.activeId;
+    const isThreshold = sub.isThreshold;
+    const score       = submissionTotal(sub);
+    const pct         = max > 0 ? (score / max * 100) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'submission-card' + (isActive ? ' active' : '') + (isThreshold ? ' threshold-card' : '');
+    card.dataset.pid = sub.id;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'pc-header';
+    if (isThreshold) {
+      hdr.innerHTML = `
+        <span class="pc-color-swatch" style="background:repeating-linear-gradient(45deg,#a0aec0,#a0aec0 3px,#fff 3px,#fff 6px);border:1px solid #a0aec0" title="Threshold (fixed)"></span>
+        <span class="pc-locked-name">
+          Threshold
+          <span class="pc-lock-badge">fixed</span>
+        </span>
+        <span class="pc-score-badge" id="badge-${sub.id}" style="color:#718096">${score}&thinsp;/&thinsp;${max}</span>
+      `;
+    } else {
+      hdr.innerHTML = `
+        <span class="pc-color-swatch" style="background:${sub.color}" data-pick="${sub.id}" title="Change colour"></span>
+        <input class="pc-name-input" value="${sub.name}" placeholder="Submission name" maxlength="40" data-pid="${sub.id}" />
+        <span class="pc-score-badge" id="badge-${sub.id}" style="color:${sub.color}">${score}&thinsp;/&thinsp;${max}</span>
+        <button class="icon-btn danger" data-del-sub="${sub.id}" title="Remove">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      `;
+    }
+
+    const body = document.createElement('div');
+    body.className = 'pc-values';
+    const barColor = isThreshold ? '#a0aec0' : sub.color;
+    const bar = document.createElement('div');
+    bar.className = 'score-bar-block';
+    bar.innerHTML = `
+      <div class="score-bar-top">
+        <span style="font-size:11px;color:#718096">${isThreshold ? 'Threshold Total' : 'Total Score'}</span>
+        <span>
+          <span class="score-big" id="total-${sub.id}" style="color:${barColor}">${score}</span>
+          <span class="score-of">/ ${max} pts</span>
+        </span>
+      </div>
+      <div class="score-track">
+        <div class="score-fill" id="fill-${sub.id}" style="width:${pct}%;background:${barColor}${isThreshold ? ';background:repeating-linear-gradient(45deg,#a0aec0,#a0aec0 4px,#e2e8f0 4px,#e2e8f0 8px)' : ''}"></div>
+      </div>
+    `;
+    body.appendChild(bar);
+
+    state.axes.forEach(axis => {
+      const v    = sub.values[axis.id] || 0;
+      const hint = (axis.pl[v] || '').trim();
+      const row  = document.createElement('div');
+      row.className = 'av-row';
+      row.innerHTML = `
+        <div class="av-top">
+          <span class="av-name" title="${axis.label}">${axis.label || 'Axis'}</span>
+          <span class="av-num" id="avn-${sub.id}-${axis.id}">${v}</span>
+        </div>
+        <input type="range" class="av-slider" min="0" max="${MAX_VAL}" step="1" value="${v}"
+               style="--c:${isThreshold ? '#a0aec0' : sub.color}"
+               data-pid="${sub.id}" data-aid="${axis.id}" />
+        <div class="av-hint" id="avh-${sub.id}-${axis.id}">${hint}</div>
+      `;
+      body.appendChild(row);
+    });
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    return card;
+  };
+
+  if (threshold) cont.appendChild(buildCard(threshold));
+  cont.appendChild(avgCard);
+  regulars.forEach(sub => cont.appendChild(buildCard(sub)));
+
+  renderSummary();
+}
+
+function renderSummary() {
+  const cont = document.getElementById('summary-list');
+  cont.innerHTML = '';
+  const max     = maxTotal();
+  const avgVals = computeAverageValues();
+  const avgTotal = parseFloat(state.axes.reduce((s, a) => s + (avgVals[a.id] || 0), 0).toFixed(1));
+
+  // Threshold row
+  const thresh = state.submissions.find(s => s.isThreshold);
+  if (thresh) {
+    const score = submissionTotal(thresh);
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    row.innerHTML = `
+      <span class="summary-dot" style="background:repeating-linear-gradient(45deg,#a0aec0,#a0aec0 2px,#e2e8f0 2px,#e2e8f0 4px)"></span>
+      <span class="summary-name">Threshold <span style="font-size:9px;color:#a0aec0">(fixed)</span></span>
+      <span class="summary-score" style="color:#a0aec0">${score} / ${max}</span>
+    `;
+    cont.appendChild(row);
+  }
+
+  // Average row
+  const avgRow = document.createElement('div');
+  avgRow.className = 'summary-row';
+  avgRow.innerHTML = `
+    <span class="summary-dot" style="background:${AVERAGE_COLOR}"></span>
+    <span class="summary-name">Average <span style="font-size:9px;color:${AVERAGE_COLOR}">(computed)</span></span>
+    <span class="summary-score" style="color:${AVERAGE_COLOR}">${avgTotal} / ${max}</span>
+  `;
+  cont.appendChild(avgRow);
+
+  // Regular submissions
+  state.submissions.filter(s => !s.isThreshold).forEach(sub => {
+    const score = submissionTotal(sub);
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    row.innerHTML = `
+      <span class="summary-dot" style="background:${sub.color}"></span>
+      <span class="summary-name">${sub.name}</span>
+      <span class="summary-score" style="color:${sub.color}">${score} / ${max}</span>
+    `;
+    cont.appendChild(row);
+  });
+}
+
+// Live-update score widgets without full re-render
+function refreshSubmissionScore(pid) {
+  const sub = state.submissions.find(s => s.id === pid);
+  if (!sub) return;
+  const score = submissionTotal(sub);
+  const max   = maxTotal();
+  const pct   = max > 0 ? (score / max * 100) : 0;
+  const badge = document.getElementById(`badge-${pid}`);
+  const total = document.getElementById(`total-${pid}`);
+  const fill  = document.getElementById(`fill-${pid}`);
+  if (badge) badge.innerHTML = `${score}&thinsp;/&thinsp;${max}`;
+  if (total) total.textContent = score;
+  if (fill)  fill.style.width  = pct + '%';
+
+  // Also refresh the average card
+  const avgVals  = computeAverageValues();
+  const avgTotal = parseFloat(state.axes.reduce((s, a) => s + (avgVals[a.id] || 0), 0).toFixed(1));
+  const avgPct   = max > 0 ? (avgTotal / max * 100) : 0;
+  const avgBadge = document.getElementById(`badge-${AVERAGE_ID}`);
+  const avgBig   = document.getElementById(`total-${AVERAGE_ID}`);
+  const avgFill  = document.getElementById(`fill-${AVERAGE_ID}`);
+  if (avgBadge) avgBadge.innerHTML = `${avgTotal}&thinsp;/&thinsp;${max}`;
+  if (avgBig)   avgBig.textContent  = avgTotal;
+  if (avgFill)  avgFill.style.width = avgPct + '%';
+  // Refresh per-axis bars in average card
+  const avgBody = document.getElementById('avg-values-body');
+  if (avgBody) {
+    const bars = avgBody.querySelectorAll('[data-avg-bar]');
+    bars.forEach(b => {
+      const aid = b.dataset.avgBar;
+      const v   = parseFloat((avgVals[aid] || 0).toFixed(1));
+      b.style.width = (v / MAX_VAL * 100) + '%';
+      const numEl = b.closest('.av-row')?.querySelector('.av-num');
+      if (numEl) numEl.textContent = v;
+    });
+  }
+
+  renderSummary();
+}
+
+// ─── Full re-render ───────────────────────────────────────────────────────────
+function fullRender() {
+  renderAxesList();
+  renderSubmissionsList();
+  renderChart();
+  saveState();
+}
+
+// ─── Events: axes ─────────────────────────────────────────────────────────────
+document.getElementById('axes-list').addEventListener('click', e => {
+  // Toggle accordion
+  const hdr = e.target.closest('.axis-card-header');
+  if (hdr && !e.target.closest('input') && !e.target.closest('button')) {
+    hdr.closest('.axis-card').classList.toggle('open');
+    return;
+  }
+  // Toggle per-axis labels
+  const toggleId = e.target.closest('[data-toggle-labels]')?.dataset.toggleLabels;
+  if (toggleId) {
+    const axis = state.axes.find(a => a.id === toggleId);
+    if (axis) { axis.showLabels = axis.showLabels === false ? true : false; }
+    renderAxesList();
+    renderChart();
+    saveState();
+    return;
+  }
+
+  // Delete axis
+  const delId = e.target.closest('[data-del-axis]')?.dataset.delAxis;
+  if (delId) {
+    if (state.axes.length <= 3) { alert('Minimum 3 axes required.'); return; }
+    state.axes = state.axes.filter(a => a.id !== delId);
+    state.submissions.forEach(s => delete s.values[delId]);
+    fullRender();
+  }
+});
+
+document.getElementById('axes-list').addEventListener('input', e => {
+  const aid = e.target.dataset.aid;
+  if (!aid) return;
+  const axis = state.axes.find(a => a.id === aid);
+  if (!axis) return;
+
+  if (e.target.classList.contains('ax-name-input')) {
+    axis.label = e.target.value;
+    renderChart();
+    renderSubmissionsList(); // refresh axis name labels
+  }
+
+  if (e.target.classList.contains('pl-input')) {
+    const pv = e.target.dataset.pv;
+    axis.pl[pv] = e.target.value;
+    renderChart();
+    // Refresh label hints for any submission that has this value on this axis
+    state.submissions.forEach(sub => {
+      const v = sub.values[aid] || 0;
+      if (String(v) === String(pv)) {
+        const hint = document.getElementById(`avh-${sub.id}-${aid}`);
+        if (hint) hint.textContent = e.target.value.trim();
+      }
+    });
+  }
+});
+
+document.getElementById('add-axis-btn').addEventListener('click', () => {
+  const id = uid();
+  state.axes.push({ id, label: `Axis ${state.axes.length + 1}`, pl: {}, showLabels: true });
+  state.submissions.forEach(s => { s.values[id] = 0; });
+  fullRender();
+});
+
+// ─── Events: submissions ──────────────────────────────────────────────────────
+document.getElementById('submissions-list').addEventListener('click', e => {
+  // Delete submission (threshold can't be deleted)
+  const delId = e.target.closest('[data-del-sub]')?.dataset.delSub;
+  if (delId) {
+    const nonThreshold = state.submissions.filter(s => !s.isThreshold);
+    if (nonThreshold.length <= 1) { alert('At least one submission required.'); return; }
+    state.submissions = state.submissions.filter(s => s.id !== delId);
+    if (state.activeId === delId) {
+      const first = state.submissions.find(s => !s.isThreshold);
+      state.activeId = first ? first.id : THRESHOLD_ID;
+    }
+    fullRender(); return;
+  }
+
+  // Colour swatch → open colour picker
+  const swatch = e.target.closest('[data-pick]');
+  if (swatch) {
+    const pid  = swatch.dataset.pick;
+    const sub  = state.submissions.find(s => s.id === pid);
+    const picker = document.getElementById('color-picker');
+    picker.value = sub.color;
+    picker.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:0;height:0;pointer-events:auto;opacity:0`;
+    picker._pid = pid;
+    picker.click();
+    return;
+  }
+
+  // Select submission (including average card)
+  const card = e.target.closest('.submission-card');
+  if (card && !e.target.closest('input') && !e.target.closest('button') && !e.target.closest('[data-pick]')) {
+    state.activeId = card.dataset.pid;
+    // Average card: just toggle expand without full re-render for speed
+    if (card.dataset.pid === AVERAGE_ID) {
+      document.querySelectorAll('.submission-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const body = document.getElementById('avg-values-body');
+      if (body) body.style.display = body.style.display === 'flex' ? '' : 'flex';
+      renderChart();
+    } else {
+      fullRender();
+    }
+  }
+});
+
+// Colour picker input
+document.getElementById('color-picker').addEventListener('input', e => {
+  const pid = e.target._pid;
+  const sub = state.submissions.find(s => s.id === pid);
+  if (!sub) return;
+  sub.color = e.target.value;
+  renderSubmissionsList();
+  renderChart();
+});
+
+// Submission name input + sliders
+document.getElementById('submissions-list').addEventListener('input', e => {
+  const pid = e.target.dataset.pid;
+
+  if (e.target.classList.contains('pc-name-input') && pid) {
+    const sub = state.submissions.find(s => s.id === pid);
+    if (sub) { sub.name = e.target.value; renderSummary(); saveState(); }
+    return;
+  }
+
+  if (e.target.classList.contains('av-slider')) {
+    const { pid: spid, aid } = e.target.dataset;
+    const sub = state.submissions.find(s => s.id === spid);
+    if (!sub) return;
+    const v = parseInt(e.target.value);
+    sub.values[aid] = v;
+
+    const numEl = document.getElementById(`avn-${spid}-${aid}`);
+    if (numEl) numEl.textContent = v;
+
+    const axis = state.axes.find(a => a.id === aid);
+    const hint = document.getElementById(`avh-${spid}-${aid}`);
+    if (hint && axis) hint.textContent = (axis.pl[v] || '').trim();
+
+    refreshSubmissionScore(spid);
+    renderChart();
+    saveState();
+  }
+});
+
+document.getElementById('add-submission-btn').addEventListener('click', () => {
+  const regulars = state.submissions.filter(s => !s.isThreshold);
+  const color    = PALETTE[regulars.length % PALETTE.length];
+  const sub      = makeSubmission(`Submission ${regulars.length + 1}`, color);
+  state.submissions.push(sub);
+  state.activeId = sub.id;
+  fullRender();
+});
+
+// ─── Display settings ─────────────────────────────────────────────────────────
+document.getElementById('set-dots').addEventListener('change',    e => { state.showDots    = e.target.checked; renderChart(); saveState(); });
+document.getElementById('set-vals').addEventListener('change',    e => { state.showVals    = e.target.checked; renderChart(); saveState(); });
+document.getElementById('set-plabels').addEventListener('change', e => { state.showPLabels = e.target.checked; renderChart(); saveState(); });
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  const svg   = document.getElementById('chart-svg');
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('x', '-360'); bg.setAttribute('y', '-340');
+  bg.setAttribute('width', '720'); bg.setAttribute('height', '680');
+  bg.setAttribute('fill', '#ffffff');
+  clone.insertBefore(bg, clone.firstChild);
+  const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'siggraph-assessment.svg';
+  a.click();
+});
+
+// ─── CSV Import ───────────────────────────────────────────────────────────────
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return null;
+
+  function parseRow(line) {
+    const cells = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  }
+
+  const headers = parseRow(lines[0]).map(h => h.replace(/^"|"$/g, ''));
+  const rows = lines.slice(1)
+    .filter(l => l.trim())
+    .map(l => {
+      const vals = parseRow(l);
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (vals[i] ?? '').replace(/^"|"$/g, ''); });
+      return obj;
+    });
+
+  return { headers, rows };
+}
+
+// Fuzzy header → axis match
+function autoMatchHeader(axisLabel, headers) {
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const al = norm(axisLabel);
+  // exact
+  for (const h of headers) if (norm(h) === al) return h;
+  // starts-with
+  for (const h of headers) if (norm(h).startsWith(al) || al.startsWith(norm(h))) return h;
+  // contains
+  for (const h of headers) if (norm(h).includes(al) || al.includes(norm(h))) return h;
+  return '';
+}
+
+// Auto-detect max value in a column (for scaling)
+function detectMax(rows, col) {
+  let max = 0;
+  rows.forEach(r => { const v = parseFloat(r[col]); if (!isNaN(v) && v > max) max = v; });
+  if (max <= 5)   return 5;
+  if (max <= 10)  return 10;
+  if (max <= 100) return 100;
+  return max;
+}
+
+let _csvData = null; // { headers, rows } set when file is loaded
+
+function openImportModal(data) {
+  _csvData = data;
+  const { headers, rows } = data;
+
+  // Preview table (max 4 data rows)
+  const previewRows = rows.slice(0, 4);
+  let thtml = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  previewRows.forEach(r => {
+    thtml += '<tr>' + headers.map(h => `<td>${r[h] ?? ''}</td>`).join('') + '</tr>';
+  });
+  thtml += '</tbody></table>';
+  document.getElementById('modal-preview').innerHTML = thtml;
+  document.getElementById('modal-row-count').textContent = `— ${rows.length} row${rows.length !== 1 ? 's' : ''}`;
+
+  // Name column selector
+  const nameEl = document.getElementById('map-name');
+  nameEl.innerHTML = '<option value="">— none —</option>' +
+    headers.map(h => `<option value="${h}">${h}</option>`).join('');
+  // Auto-pick first text-ish column
+  const nameGuess = headers.find(h => /name|title|id|submission/i.test(h)) || headers[0];
+  nameEl.value = nameGuess;
+
+  // Axis rows
+  const axesContainer = document.getElementById('map-axes-rows');
+  axesContainer.innerHTML = '';
+  state.axes.forEach(axis => {
+    const matched = autoMatchHeader(axis.label, headers);
+    const row = document.createElement('div');
+    row.className = 'map-row';
+    row.innerHTML = `
+      <span class="map-label" title="${axis.label}">${axis.label}</span>
+      <select class="map-select ${matched ? 'matched' : ''}" data-axis-id="${axis.id}">
+        <option value="">— skip —</option>
+        ${headers.map(h => `<option value="${h}" ${h === matched ? 'selected' : ''}>${h}</option>`).join('')}
+      </select>
+    `;
+    axesContainer.appendChild(row);
+  });
+
+  // Note
+  updateModalNote();
+
+  document.getElementById('import-modal').classList.remove('hidden');
+}
+
+function updateModalNote() {
+  const { rows } = _csvData;
+  const mapped = [...document.querySelectorAll('#map-axes-rows .map-select')]
+    .filter(s => s.value).length;
+  document.getElementById('modal-note').textContent =
+    `${rows.length} submission${rows.length !== 1 ? 's' : ''} · ${mapped} axis${mapped !== 1 ? 'es' : ''} mapped`;
+  document.getElementById('modal-import').disabled = rows.length === 0;
+}
+
+function doImport() {
+  const { rows } = _csvData;
+  const nameCol  = document.getElementById('map-name').value;
+  const scaleEl  = document.getElementById('map-scale').value;
+
+  const axisSelects = [...document.querySelectorAll('#map-axes-rows .map-select')];
+  const mapping = axisSelects.map(s => ({ axisId: s.dataset.axisId, col: s.value }))
+                             .filter(m => m.col);
+
+  // Per-column scale factor
+  function scaleFactor(col) {
+    if (scaleEl === 'auto') return 5 / detectMax(rows, col);
+    return 5 / parseFloat(scaleEl);
+  }
+  const factorCache = {};
+  mapping.forEach(m => { factorCache[m.col] = scaleFactor(m.col); });
+
+  const regulars = state.submissions.filter(s => !s.isThreshold);
+  let addedCount = 0;
+
+  rows.forEach((row, ri) => {
+    const name  = nameCol ? (row[nameCol] || `Import ${ri + 1}`) : `Import ${ri + 1}`;
+    const color = PALETTE[(regulars.length + addedCount) % PALETTE.length];
+    const sub   = makeSubmission(name, color);
+
+    mapping.forEach(({ axisId, col }) => {
+      const raw = parseFloat(row[col]);
+      if (!isNaN(raw)) {
+        const scaled = Math.min(MAX_VAL, Math.max(0, Math.round(raw * factorCache[col] * 10) / 10));
+        sub.values[axisId] = Math.round(scaled); // integer snap
+      }
+    });
+
+    state.submissions.push(sub);
+    addedCount++;
+  });
+
+  if (addedCount > 0) {
+    state.activeId = state.submissions[state.submissions.length - 1].id;
+  }
+
+  closeImportModal();
+  fullRender();
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').classList.add('hidden');
+  _csvData = null;
+}
+
+// Wire up modal events
+document.getElementById('import-csv-btn').addEventListener('click', () => {
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-file-input').click();
+});
+
+document.getElementById('csv-file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const data = parseCSV(ev.target.result);
+    if (!data || data.rows.length === 0) {
+      alert('Could not parse CSV, or file is empty. Make sure the first row contains column headers.');
+      return;
+    }
+    openImportModal(data);
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('modal-close').addEventListener('click',  closeImportModal);
+document.getElementById('modal-cancel').addEventListener('click', closeImportModal);
+document.getElementById('import-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('import-modal')) closeImportModal();
+});
+document.getElementById('modal-import').addEventListener('click', doImport);
+
+// Live update note when selects change
+document.getElementById('import-modal').addEventListener('change', e => {
+  if (e.target.classList.contains('map-select')) updateModalNote();
+});
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+// Sync checkboxes to (possibly restored) state
+document.getElementById('set-dots').checked    = state.showDots;
+document.getElementById('set-vals').checked    = state.showVals;
+document.getElementById('set-plabels').checked = state.showPLabels;
+
+fullRender();
+window.addEventListener('resize', renderChart);
+</script>
+</body>
+</html>
