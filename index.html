@@ -723,8 +723,18 @@ function loadState() {
 
 async function loadStateSupabase() {
   try {
-    const chartId = getChartId();
-    if (!chartId) return false;
+    let chartId = getChartId();
+    // No hash? Load the most recently updated chart.
+    if (!chartId) {
+      const res = await fetch(`${SB_URL}/charts?select=id,state_json&order=updated_at.desc&limit=1`, {
+        headers: SB_HEADERS,
+      });
+      if (!res.ok) return false;
+      const rows = await res.json();
+      if (!rows[0]?.state_json) return false;
+      setChartId(rows[0].id);
+      return applyPayload(rows[0].state_json);
+    }
     const res = await fetch(`${SB_URL}/charts?id=eq.${chartId}&select=state_json`, {
       headers: SB_HEADERS,
     });
