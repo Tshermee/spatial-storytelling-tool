@@ -641,36 +641,96 @@ const AVERAGE_COLOR = '#0bc5ea';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
+// ─── Supabase (plain fetch) ──────────────────────────────────────────────────
+const SB_URL = 'https://wlzoouqobrlquxitbkmi.supabase.co/rest/v1';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indsem9vdXFvYnJscXV4aXRia21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM4ODcsImV4cCI6MjA5MTI0OTg4N30.za-7Cr4Wfu5Fqks8RJZ8RSRp3VhGN3ix1ykE2j5CGug';
+const SB_HEADERS = {
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Content-Type': 'application/json',
+};
+
 // ─── Persistence ─────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'siggraph-assessment-v2';
 
+function getChartId() { return location.hash.replace('#', '') || null; }
+function setChartId(id) { history.replaceState(null, '', '#' + id); }
+
+function statePayload() {
+  return {
+    axes:        state.axes,
+    submissions: state.submissions,
+    activeId:    state.activeId,
+    showDots:    state.showDots,
+    showVals:    state.showVals,
+    showPLabels: state.showPLabels,
+  };
+}
+
+function applyPayload(d) {
+  if (!Array.isArray(d.axes) || !Array.isArray(d.submissions)) return false;
+  state.axes        = d.axes;
+  state.submissions = d.submissions;
+  state.activeId    = d.activeId;
+  state.showDots    = d.showDots  ?? true;
+  state.showVals    = d.showVals  ?? false;
+  state.showPLabels = d.showPLabels ?? true;
+  return true;
+}
+
+let _sbSaveTimer = null;
+function saveStateSupabase() {
+  clearTimeout(_sbSaveTimer);
+  _sbSaveTimer = setTimeout(async () => {
+    try {
+      const payload = statePayload();
+      let chartId = getChartId();
+      if (chartId) {
+        const res = await fetch(`${SB_URL}/charts?id=eq.${chartId}`, {
+          method: 'PATCH',
+          headers: SB_HEADERS,
+          body: JSON.stringify({ state_json: payload, updated_at: new Date().toISOString() }),
+        });
+        if (!res.ok) console.error('Supabase update error:', res.status, await res.text());
+      } else {
+        const res = await fetch(`${SB_URL}/charts`, {
+          method: 'POST',
+          headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+          body: JSON.stringify({ state_json: payload }),
+        });
+        if (!res.ok) { console.error('Supabase insert error:', res.status, await res.text()); return; }
+        const rows = await res.json();
+        if (rows[0]?.id) setChartId(rows[0].id);
+      }
+    } catch(e) { console.error('Supabase save exception:', e); }
+  }, 1000);
+}
+
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      axes:        state.axes,
-      submissions: state.submissions,
-      activeId:    state.activeId,
-      showDots:    state.showDots,
-      showVals:    state.showVals,
-      showPLabels: state.showPLabels,
-    }));
-  } catch(e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(statePayload())); } catch(e) {}
+  saveStateSupabase();
 }
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
-    const d = JSON.parse(raw);
-    if (!Array.isArray(d.axes) || !Array.isArray(d.submissions)) return false;
-    state.axes        = d.axes;
-    state.submissions = d.submissions;
-    state.activeId    = d.activeId;
-    state.showDots    = d.showDots  ?? true;
-    state.showVals    = d.showVals  ?? false;
-    state.showPLabels = d.showPLabels ?? true;
-    return true;
+    return applyPayload(JSON.parse(raw));
   } catch(e) { return false; }
+}
+
+async function loadStateSupabase() {
+  try {
+    const chartId = getChartId();
+    if (!chartId) return false;
+    const res = await fetch(`${SB_URL}/charts?id=eq.${chartId}&select=state_json`, {
+      headers: SB_HEADERS,
+    });
+    if (!res.ok) { console.error('Supabase load error:', res.status); return false; }
+    const rows = await res.json();
+    if (!rows[0]?.state_json) return false;
+    return applyPayload(rows[0].state_json);
+  } catch(e) { console.error('Supabase load exception:', e); return false; }
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -1617,6 +1677,17 @@ document.getElementById('set-vals').checked    = state.showVals;
 document.getElementById('set-plabels').checked = state.showPLabels;
 
 fullRender();
+
+// Async: try loading from Supabase (overrides localStorage if remote data exists)
+loadStateSupabase().then(loaded => {
+  if (loaded) {
+    document.getElementById('set-dots').checked    = state.showDots;
+    document.getElementById('set-vals').checked    = state.showVals;
+    document.getElementById('set-plabels').checked = state.showPLabels;
+    fullRender();
+  }
+});
+
 window.addEventListener('resize', renderChart);
 </script>
 </body>
