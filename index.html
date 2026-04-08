@@ -1274,6 +1274,7 @@ document.getElementById('axes-list').addEventListener('input', e => {
     axis.label = e.target.value;
     renderChart();
     renderSubmissionsList(); // refresh axis name labels
+    saveState();
   }
 
   if (e.target.classList.contains('pl-input')) {
@@ -1288,6 +1289,7 @@ document.getElementById('axes-list').addEventListener('input', e => {
         if (hint) hint.textContent = e.target.value.trim();
       }
     });
+    saveState();
   }
 });
 
@@ -1351,6 +1353,7 @@ document.getElementById('color-picker').addEventListener('input', e => {
   sub.color = e.target.value;
   renderSubmissionsList();
   renderChart();
+  saveState();
 });
 
 // Submission name input + sliders
